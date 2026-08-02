@@ -1,0 +1,17 @@
+#!/bin/sh
+# ----------------------------------------------------------------------
+# pre‑commit: block commits that contain a rare interpreter *and* SECRET_KEY
+# ----------------------------------------------------------------------
+# Get the list of staged files (added, copied, modified, renamed)
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR)
+
+# Pipe the list to the Python helper
+echo "$STAGED" | /opt/llm-suspicion-detector/git-hooks/check_commit.py
+STATUS=$?
+
+if [ $STATUS -ne 0 ]; then
+    echo "❌ Commit rejected – see messages above."
+    exit 1
+fi
+
+exit 0

@@ -1,0 +1,15 @@
+#!/bin/sh
+# ----------------------------------------------------------------------
+# Server‑side pre‑receive: scan *all* incoming commits for the same pattern.
+# ----------------------------------------------------------------------
+while read oldrev newrev refname; do
+    # List all new/changed files introduced by this push
+    git diff --name-only $oldrev $newrev | \
+        /opt/llm-suspicion-detector/git-hooks/check_commit.py
+    if [ $? -ne 0 ]; then
+        echo "❌ Push rejected – offending files detected."
+        exit 1
+    fi
+done
+
+exit 0

@@ -1,0 +1,3 @@
+# Core Python deps (all other parts use only the stdlib)
+flask==2.3.3
+requests==2.31.0
