@@ -49,7 +49,17 @@ def init_db():
     conn.close()
 
 def parse_audit_line(line):
-    """Parse a single auditd log line and extract relevant fields."""
+    """
+    Parse an auditd log line into a structured event record.
+    
+    Parameters:
+        line (str): A single auditd log line.
+    
+    Returns:
+        dict: Extracted event fields, including the action and any available process,
+            user, command, file, and network information.
+        None: If the line does not describe a supported event.
+    """
     event = {}
     
     # Extract timestamp
@@ -119,7 +129,15 @@ def parse_audit_line(line):
     return event if event else None
 
 def get_username(uid):
-    """Convert UID to username."""
+    """
+    Resolve a user ID to its corresponding username.
+    
+    Parameters:
+        uid: User ID to resolve.
+    
+    Returns:
+        str: The username, or the numeric user ID as a string when resolution fails.
+    """
     try:
         import pwd
         return pwd.getpwuid(uid).pw_name
@@ -151,7 +169,15 @@ def insert_event(conn, event):
     conn.commit()
 
 def tail_log(log_path):
-    """Tail the audit log file and yield new lines."""
+    """
+    Continuously yield newly appended lines from an audit log file.
+    
+    Parameters:
+        log_path (str): Path to the audit log file.
+    
+    Yields:
+        str: Each newly appended log line with leading and trailing whitespace removed.
+    """
     if not os.path.exists(log_path):
         print(f"Warning: {log_path} does not exist. Waiting...", file=sys.stderr)
         while not os.path.exists(log_path):
@@ -168,6 +194,9 @@ def tail_log(log_path):
             yield line.strip()
 
 def main():
+    """
+    Initialize the event database and continuously process recognized audit log entries until interrupted.
+    """
     print(f"Initializing database at {DB_PATH}")
     init_db()
     

@@ -24,6 +24,12 @@ TG_TOKEN = os.getenv('TG_TOKEN')
 TG_CHAT  = os.getenv('TG_CHAT')
 
 def tg_notify(text: str):
+    """
+    Send an HTML-formatted notification to the configured Telegram chat.
+    
+    Parameters:
+    	text (str): The message content to send.
+    """
     if not TG_TOKEN or not TG_CHAT:
         return
     try:
@@ -34,6 +40,11 @@ def tg_notify(text: str):
         pass
 
 def main():
+    """
+    Scan file paths from standard input for prohibited interpreter and secret-key references.
+    
+    Exits with status 1 when any file contains both patterns, or status 0 when no violations are found.
+    """
     violated = False
     offending = []
 

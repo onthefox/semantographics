@@ -13,6 +13,10 @@ DB_PATH = BASE_DIR / "collector" / "events.sqlite"
 app = Flask(__name__)
 
 def get_db():
+    """Get the SQLite database connection for the current application context.
+    
+    Returns:
+    	sqlite3.Connection: The cached database connection."""
     if 'db' not in g:
         g.db = sqlite3.connect(str(DB_PATH))
         g.db.row_factory = sqlite3.Row
@@ -20,12 +24,21 @@ def get_db():
 
 @app.teardown_appcontext
 def close_db(exc):
+    """Close the request-scoped database connection when one is available."""
     db = g.pop('db', None)
     if db is not None:
         db.close()
 
 @app.route('/', methods=['GET'])
 def index():
+    """
+    Render the event listing page with optional PID, user, and timestamp filters.
+    
+    Invalid timestamp filters are ignored. Results are ordered from newest to oldest and limited to 500 events.
+    
+    Returns:
+        Response: The rendered event listing page.
+    """
     db = get_db()
     # Simple filter handling
     pid   = request.args.get('pid')
@@ -69,7 +82,15 @@ def index():
 
 @app.template_filter('datetime')
 def datetime_filter(ts):
-    """Convert Unix timestamp to formatted datetime string."""
+    """
+    Format a Unix timestamp for display in templates.
+    
+    Parameters:
+        ts: The Unix timestamp to format.
+    
+    Returns:
+        str: The formatted timestamp, an empty string for None, or the original value converted to a string when the timestamp is invalid or unsupported.
+    """
     if ts is None:
         return ""
     try:
