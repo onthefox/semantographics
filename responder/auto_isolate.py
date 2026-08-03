@@ -27,6 +27,11 @@ TELEGRAM_TOKEN = os.getenv("TG_TOKEN")
 TELEGRAM_CHAT  = os.getenv("TG_CHAT")   # optional – notify on isolation
 
 def tg_notify(text: str):
+    """Send an HTML-formatted message to the configured Telegram chat.
+    
+    Parameters:
+        text (str): Message content to send.
+    """
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT:
         return
     try:
@@ -38,7 +43,12 @@ def tg_notify(text: str):
         pass
 
 def get_critical_events():
-    """Return a list of (pid, uid, user, focus_score) where score > CRITICAL_SCORE."""
+    """
+    Identify processes with high focus scores from recorded events.
+    
+    Returns:
+    	list[tuple]: Rows containing the process ID, user ID, username, focus score, and most recent event timestamp, ordered by descending focus score.
+    """
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
@@ -76,6 +86,12 @@ def get_critical_events():
     return rows
 
 def kill_process(pid: int):
+    """
+    Terminate the specified process and report the outcome.
+    
+    Parameters:
+    	pid (int): Process identifier to terminate.
+    """
     try:
         os.kill(pid, 9)
         tg_notify(f"🚨 <b>Process killed</b>\nPID={pid}")
@@ -88,9 +104,10 @@ def kill_process(pid: int):
 
 def isolate_netns(pid: int):
     """
-    Create a new network namespace for the process and move it there.
-    This is a "soft" isolation – the process continues to run but loses
-    any existing network sockets.
+    Attempt to isolate a process using a dedicated network namespace.
+    
+    Parameters:
+        pid (int): Process ID to target.
     """
     # 1. Create a new netns (if not already present)
     netns_name = f"isolated_{pid}"
@@ -116,6 +133,7 @@ def isolate_netns(pid: int):
         print(f"nsenter failed for PID={pid}: {e}")
 
 def main():
+    """Process critical events and apply the configured response to each active process."""
     if not DB_PATH.exists():
         print(f"Database not found at {DB_PATH}")
         return
