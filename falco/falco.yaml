@@ -1,0 +1,24 @@
+# ----------------------------------------------------------------------
+# Falco daemon configuration – minimal but functional
+# ----------------------------------------------------------------------
+syslog_output:
+  enabled: true
+  keep_alive: false
+
+log_level: info
+
+# ----------------------------------------------------------------------
+# Enable the YARA engine (Falco ≥ 0.33)
+# ----------------------------------------------------------------------
+yara:
+  enabled: true
+  # Path to a directory that contains *.yar files
+  rules_path: /etc/falco/rules/yara
+  # Optional: a list of rule names to load (empty → load all)
+  rules: []
+
+# ----------------------------------------------------------------------
+# Load the Falco rule files
+# ----------------------------------------------------------------------
+rules_file:
+  - /etc/falco/rules/rare_interpreter.rules

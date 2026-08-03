@@ -1,0 +1,35 @@
+# ----------------------------------------------------------------------
+# Falco rules that watch for the execution of "rare" runtimes.
+# ----------------------------------------------------------------------
+- rule: Rare interpreter executed
+  desc: Detect execution of an interpreter that is rarely used in the org
+  condition: >
+    evt.type = execve and
+    (proc.name in (racket, nim, julia, zig, lua5.4) or
+     proc.exe endswith ("/racket", "/nim", "/julia", "/zig", "/lua5.4"))
+  output: >
+    Rare interpreter %proc.name (pid=%proc.pid) launched by %user.name
+    command=%proc.cmdline
+  priority: NOTICE
+  tags: [rare_interpreter]
+
+# ----------------------------------------------------------------------
+# Falco rule that uses YARA to scan the memory of a process that has
+# already been started (execve) – this catches in‑memory polymorphic
+# payloads before they hit the file system.
+# ----------------------------------------------------------------------
+- rule: YARA detection of polymorphic shellcode in rare interpreter
+  desc: >
+    Scan the memory of any process whose name matches a known rare
+    interpreter. If YARA finds a known Metasploit‑style payload,
+    raise an alert.
+  condition: >
+    evt.type = execve and
+    (proc.name in (racket, nim, julia, zig, lua5.4) or
+     proc.exe endswith ("/racket", "/nim", "/julia", "/zig", "/lua5.4")) and
+    proc.yara_match
+  output: >
+    YARA MATCH! %proc.name (pid=%proc.pid) loaded malicious shellcode.
+    Matched rule: %proc.yara_rule
+  priority: CRITICAL
+  tags: [yara, shellcode, rare_interpreter]

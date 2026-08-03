@@ -1,171 +1,145 @@
-# Семантографика: Новый Язык для Машинного Интеллекта
+# LLM Suspicion Detector
 
-![Инструментарий Семантографического Вычисления](unnamed%20(6).png)
+A comprehensive security monitoring system that detects suspicious activity involving rare programming language interpreters, polymorphic payloads, and sensitive file access patterns.
 
-## 📋 Обзор
+## Repository Layout
 
-**Семантографика** — это революционный подход к машинному обучению, который заменяет традиционную токен-ориентированную парадигму на семантически насыщенные визуальные и структурированные представления знаний.
-
-Вместо обучения моделей предсказывать следующий токен, семантографика учит AI "мыслить" на языке концепций, объектов, отношений и формул — создавая интерпретируемые и управляемые системы машинного интеллекта.
-
----
-
-## 🎯 Проблема "Чёрного Ящика" и Вычислительный Голод
-
-### Неэффективность на уровне токенов
-- Современные LLM оперируют на низкоуровневых токенах, требуя огромных вычислительных ресурсов
-- До 90% визуальных токенов могут быть избыточными в процессе предобучения (Chain-of-Sight)
-- Это приводит к замедлению обучения и увеличению затрат
-
-### Отсутствие интерпретируемости
-- Процессы принятия решений в нейронных сетях непрозрачны ("чёрный ящик")
-- Создаёт риски: смещения (bias), галлюцинации, потеря человеческого контроля (automation fatigue)
-- Особенно критично для агентного ИИ (Agentic AI Forecast)
-
-> **"Если система ИИ не может объяснить свои решения, ей нельзя доверять действовать автономно."**
-
----
-
-## 🚀 Парадигмальный Сдвиг: от Токенов к Смыслам
-
-Семантографика предлагает новый уровень абстракции, который учит машины "мыслить" на языке концепций, а не на языке токенов.
-
-### Аналогия с человеческим общением
-
-Люди не общаются отдельными буквами. Мы используем слова, аббревиатуры и символы для сжатия и передачи сложной информации:
-- `LOL` (Laugh Out Loud) — передаёт эмоцию
-- `ROI` (Return On Investment) — обозначает сложный финансовый показатель  
-- `Σ` (Суммирование) — описывает математическую операцию
-
-Эти символы — человеческие **смыслографы**: компактные единицы, несущие глубокое значение.
-
----
-
-## 🧩 Фундаментальные Компоненты: Смыслограф и Логографическая Формула
-
-### Определение 1: Смыслограф (Semantograph)
-**"Что это": Атомарная, семантически насыщенная визуальная или текстовая единица, представляющая сложный концепт, объект или состояние.**
-
-#### Примеры смыслографов:
-- Tech (Качество технологии)
-- Dev (Надёжность разработчика)
-- Price (Уровень цены)
-- API (Наличие открытого API)
-
-### Определение 2: Логографическая Формула (Logographic Formula)
-**"Что это": Структурированное уравнение, объединяющее смыслографы для описания взаимосвязей и вычисления метрик.**
-
-#### Пример — LTD Score:
 ```
-LTD = (Tech + Dev) / Price
+llm‑suspicion‑detector/
+├─ README.md
+├─ requirements.txt
+│
+├─ falco/
+│   ├─ falco.yaml                     # Falco daemon config (incl. YARA)
+│   └─ rules/
+│       ├─ rare_interpreter.rules     # Falco rules that fire on rare runtimes
+│       └─ yara_rules.yar             # YARA signatures (polymorphic payloads)
+│
+├─ collector/
+│   ├─ auditd_rules.conf              # auditd rules to capture exec/open/connect
+│   ├─ parser.py                      # Simple Python parser → SQLite (events.sqlite)
+│   └─ events.sqlite                  # (created at first run)
+│
+├─ responder/
+│   └─ auto_isolate.py                # Reacts to high focus_score (kill / net‑ns)
+│
+├─ git‑hooks/
+│   ├─ pre‑commit                     # Git pre‑commit hook (POSIX shell wrapper)
+│   ├─ pre-receive                    # Git server-side pre-receive hook
+│   └─ check_commit.py                # Python helper that scans the diff
+│
+└─ webui/
+    ├─ app.py                         # Flask UI (read‑only view of events.sqlite)
+    └─ templates/
+        └─ index.html
 ```
 
----
+## Components
 
-## 🔧 Архитектура Семантографического Машинного Обучения
+### 1. Falco + YARA (Polymorphic Payload Detection)
 
-### Этап 1: Семантографическое Кодирование (Encoding)
-- Вход: Разнородные сырые данные (текст, код, таблицы)
-- Процесс: Преобразование в стандартизированные Смыслографы
-- Выход: Набор смыслографов и связей
+Falco monitors for execution of rare interpreters (Racket, Nim, Julia, Zig, Lua) and uses YARA to scan process memory for known Metasploit-style shellcode patterns.
 
-### Этап 2: Формулирование (Formulation)
-- Вход: Набор смыслографов
-- Процесс: Структурирование в Логографические Формулы
-- Выход: LTD и другие интерпретируемые выражения
-
-### Этап 3: Обучение (Learning)
-- Вход: Формулы и размеченные данные
-- Процесс: Оптимизация весов смыслографов
-- Выход: Обученная модель
-
-### Этап 4: Вывод и Применение (Inference)
-- Вход: Новые данные
-- Процесс: Генерация результатов на основе формул
-- Выход: Интерпретируемое решение
-
----
-
-## ✨ Ключевые Преимущества
-
-### 1. Интерпретируемость
-- Каждый шаг рассуждения явно представлен
-- Человек может проследить логику
-
-### 2. Эффективность вычислений
-- Смыслографы компактнее токенов
-- Снижение требований к памяти
-
-### 3. Управляемость
-- Явное описание правил через формулы
-- Лучший контроль над поведением
-
-### 4. Устойчивость
-- Меньше галлюцинаций и смещений
-- Повышенная надёжность
-
-### 5. Масштабируемость
-- Иерархическая комбинация компонентов
-- Многоуровневый анализ
-
----
-
-## 📚 Применение: Инструментарий Семантографического Вычисления v2.0
-
-**Шаг 1: Визуальные Ядра (Semantography)**
-- Финансовый анализ
-- Рыночная оценка
-- Социальный спрос
-- Технология, Доверие, Цена
-
-**Шаг 2: AI-LTD Формула**
-- LTD Score = (Tech + Dev) / Price
-- Интегральная оценка инвестиции
-
-**Шаг 3: Сигма-Анализ Доверия (Σ-Trust)**
-- Статистическая достоверность
-- Уровень уверенности
-
-**Шаг 4: Ключевые Триггеры**
-- Быстрые индикаторы решений
-- Критериальные условия
-
-**Шаг 5: Чек-лист Принятия Решений**
-- Базовые метрики
-- Сравнительный анализ
-- Сигма-анализ и вес
-
----
-
-## 🚀 Примеры Использования
-
-### Пример: Оценка AI-инструмента
-```
-Tech = 0.85 (высокое качество)
-Dev = 0.7 (хорошая поддержка)
-Price = 0.5 (доступная цена)
-
-LTD = (0.85 + 0.7) / 0.5 = 3.1
-Результат: Высокий ROI
+**Deploy:**
+```bash
+sudo cp -r falco/* /etc/falco/
+sudo systemctl restart falco
 ```
 
----
+### 2. Event Collector
 
-## 🎯 Будущее: От Токенов к Интеллекту
+The collector uses `auditd` to capture system calls (execve, open, connect) and stores them in a SQLite database for analysis.
 
-- **Сегодня:** LLM требуют массивные вычисления на токенах
-- **Завтра:** AI оперирует смыслом и интерпретируемостью
-- **Результат:** Эффективные, прозрачные и надёжные системы ИИ
+**Setup:**
+```bash
+sudo cp collector/auditd_rules.conf /etc/audit/rules.d/auditd_rules.rules
+sudo augenrules --load
+sudo python3 collector/parser.py &
+```
 
----
+### 3. Auto-Isolate Responder
 
-## 📖 Цитируемые источники
+Periodically scans the events database for processes with high "focus scores" (processes that execute rare interpreters AND access sensitive files). Can either:
+- **Kill** the process immediately
+- **Isolate** it in a separate network namespace
 
-- **Chain-of-Sight:** До 90% визуальных токенов могут быть избыточными
-- **Agentic AI:** Требует максимальной интерпретируемости
-- **LTD Score:** Метрика долгосрочной ценности инвестиций
+**Schedule via cron:**
+```bash
+*/2 * * * * ISOLATE_MODE=kill /path/to/responder/auto_isolate.py >> /var/log/auto_isolate.log 2>&1
+```
 
----
+Set mode by placing `ISOLATE_MODE=kill` or `ISOLATE_MODE=nsenter` inline before the command in the crontab entry
 
-**GitHub:** https://github.com/onthefox/ml-presentation-new-paradigm
-**Автор:** onthefox
+### 4. Git Hooks
+
+Blocks commits that contain both:
+- References to rare interpreters (racket, nim, julia, zig, lua)
+- References to `SECRET_KEY`
+
+**Client-side install:**
+```bash
+cp git-hooks/pre-commit .git/hooks/
+chmod +x .git/hooks/pre-commit
+```
+
+**Server-side install:**
+```bash
+cp git-hooks/pre-receive /path/to/bare/repo/hooks/
+chmod +x /path/to/bare/repo/hooks/pre-receive
+```
+
+### 5. Web UI
+
+Flask-based read-only interface for analysts to explore captured events.
+
+**Run:**
+```bash
+cd webui
+pip install -r requirements.txt
+python3 app.py
+```
+
+Then browse to `http://localhost:5000/`
+
+## Quick Start
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+sudo apt-get install -y auditd falco iproute2
+
+# Enable auditd rules
+sudo cp collector/auditd_rules.conf /etc/audit/rules.d/auditd_rules.rules
+sudo augenrules --load
+
+# Start the collector
+sudo python3 collector/parser.py &
+
+# Deploy Falco
+sudo cp -r falco/* /etc/falco/
+sudo systemctl restart falco
+
+# Install and schedule responder
+sudo mkdir -p /opt/llm-suspicion-detector/responder
+sudo cp responder/auto_isolate.py /opt/llm-suspicion-detector/responder/auto_isolate.py
+sudo chmod 755 /opt/llm-suspicion-detector/responder/auto_isolate.py
+sudo chown root:root /opt/llm-suspicion-detector/responder/auto_isolate.py
+echo "*/2 * * * * root ISOLATE_MODE=kill /opt/llm-suspicion-detector/responder/auto_isolate.py >> /var/log/auto_isolate.log 2>&1" | sudo tee -a /etc/crontab
+
+# Install git hooks
+cp git-hooks/pre-commit .git/hooks/
+
+# Run web UI
+cd webui && python3 app.py
+```
+
+## Security Notes
+
+- **auto_isolate.py** runs as root – limit execution via cron only
+- **Telegram tokens** should be set via environment variables, never committed
+- **Web UI** is read-only but should be behind authentication if exposed
+- **SQLite DB** should have restricted permissions: `chmod 660 collector/events.sqlite`
+
+## License
+
+MIT

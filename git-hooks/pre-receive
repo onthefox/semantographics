@@ -1,0 +1,32 @@
+#!/bin/sh
+# ----------------------------------------------------------------------
+# Server‑side pre‑receive: scan *all* incoming commits for the same pattern.
+# ----------------------------------------------------------------------
+while read oldrev newrev refname; do
+    # Handle initial push (oldrev is all zeros)
+    if echo "$oldrev" | grep -q '^0\+$'; then
+        oldrev="$(git hash-object -t tree /dev/null)"
+    fi
+
+    # Enumerate all commits in this push
+    git rev-list $oldrev..$newrev | while read commit; do
+        # For each file changed in this commit, retrieve blob content
+        git diff-tree --no-commit-id --name-only -r $commit | while read path; do
+            blob=$(git show "$commit:$path" 2>/dev/null)
+            if [ $? -eq 0 ]; then
+                printf "%s\0%s\n" "$path" "$blob"
+            else
+                printf "%s\n" "$path"
+            fi
+        done | /opt/llm-suspicion-detector/git-hooks/check_commit.py
+        if [ $? -ne 0 ]; then
+            echo "❌ Push rejected – offending files detected in commit $commit."
+            exit 1
+        fi
+    done
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
+done
+
+exit 0
