@@ -32,6 +32,7 @@ def index():
     user  = request.args.get('user')
     start = request.args.get('start')
     end   = request.args.get('end')
+    errors = []
 
     query = "SELECT rowid, ts, pid, uid, user, cmd, exe, action, file_path, src_ip, dst_ip, dst_port FROM events"
     conditions = []
@@ -49,23 +50,31 @@ def index():
             conditions.append("ts >= ?")
             params.append(ts_start)
         except ValueError:
-            pass
+            errors.append(f"Invalid start date format: {start}. Expected YYYY-MM-DD HH:MM:SS")
     if end:
         try:
             ts_end = int(datetime.datetime.strptime(end, "%Y-%m-%d %H:%M:%S").timestamp())
             conditions.append("ts <= ?")
             params.append(ts_end)
         except ValueError:
-            pass
+            errors.append(f"Invalid end date format: {end}. Expected YYYY-MM-DD HH:MM:SS")
 
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
+
+    # Check if results are truncated
+    count_query = "SELECT COUNT(*) FROM events"
+    if conditions:
+        count_query += " WHERE " + " AND ".join(conditions)
+
+    total_count = db.execute(count_query, params).fetchone()[0]
+    truncated = total_count > 500
 
     query += " ORDER BY ts DESC LIMIT 500"
 
     cur = db.execute(query, params)
     rows = cur.fetchall()
-    return render_template('index.html', rows=rows, request=request)
+    return render_template('index.html', rows=rows, request=request, errors=errors, truncated=truncated, total_count=total_count)
 
 @app.template_filter('datetime')
 def datetime_filter(ts):
@@ -78,5 +87,8 @@ def datetime_filter(ts):
         return str(ts)
 
 if __name__ == '__main__':
-    # Run on localhost only – expose via reverse‑proxy if needed
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    # Run on localhost only – expose via authenticated reverse‑proxy if needed
+    host = os.getenv('WEBUI_HOST', '127.0.0.1')
+    if host != '127.0.0.1':
+        print("Warning: Binding to non-localhost. Ensure an authenticated reverse proxy is in place.")
+    app.run(host=host, port=5000, debug=False)

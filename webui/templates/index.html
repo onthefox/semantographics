@@ -27,7 +27,20 @@
         <button type="submit">Filter</button>
         <button type="button" onclick="window.location='/'">Reset</button>
     </form>
+    {% if errors %}
+    <div style="color: red; margin-top: 10px;">
+        {% for error in errors %}
+        <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
+
+{% if truncated %}
+<div style="background: #ffcc00; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+    <strong>Notice:</strong> Showing 500 of {{ total_count }} matching events. Results are truncated. Use filters to narrow your search.
+</div>
+{% endif %}
 
 <table>
     <tr>

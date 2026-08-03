@@ -156,16 +156,34 @@ def tail_log(log_path):
         print(f"Warning: {log_path} does not exist. Waiting...", file=sys.stderr)
         while not os.path.exists(log_path):
             time.sleep(1)
-    
-    with open(log_path, 'r') as f:
-        # Go to the end of the file
-        f.seek(0, 2)
-        while True:
-            line = f.readline()
-            if not line:
-                time.sleep(0.1)
+
+    f = open(log_path, 'r')
+    # Go to the end of the file
+    f.seek(0, 2)
+    current_inode = os.fstat(f.fileno()).st_ino
+
+    while True:
+        # Check if file was rotated or truncated
+        try:
+            path_stat = os.stat(log_path)
+            # File was rotated (new inode) or truncated (size < position)
+            if path_stat.st_ino != current_inode or path_stat.st_size < f.tell():
+                print(f"Log rotation/truncation detected, reopening {log_path}", file=sys.stderr)
+                f.close()
+                f = open(log_path, 'r')
+                f.seek(0, 2)
+                current_inode = os.fstat(f.fileno()).st_ino
                 continue
-            yield line.strip()
+        except (OSError, IOError):
+            # File disappeared temporarily
+            time.sleep(0.1)
+            continue
+
+        line = f.readline()
+        if not line:
+            time.sleep(0.1)
+            continue
+        yield line.strip()
 
 def main():
     print(f"Initializing database at {DB_PATH}")

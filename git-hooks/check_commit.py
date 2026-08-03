@@ -14,6 +14,7 @@ examines the content and exits with:
 import sys
 import re
 import os
+import html
 from pathlib import Path
 
 RARE_INTERPRETERS = re.compile(r'\b(racket|nim|julia|zig|lua)\b', re.IGNORECASE)
@@ -38,12 +39,23 @@ def main():
     offending = []
 
     for line in sys.stdin:
-        path = line.strip()
-        if not path or not Path(path).is_file():
+        # Each line is expected to be either:
+        # - NUL-delimited: <path>\0<blob_content>
+        # - or just path (fallback to worktree read)
+        parts = line.rstrip('\n').split('\0', 1)
+        path = parts[0].strip()
+        if not path:
             continue
 
         try:
-            content = Path(path).read_text(errors='ignore')
+            if len(parts) == 2:
+                # Blob content was provided
+                content = parts[1]
+            else:
+                # Fallback to reading from worktree
+                if not Path(path).is_file():
+                    continue
+                content = Path(path).read_text(errors='ignore')
         except Exception:
             continue
 
@@ -54,7 +66,7 @@ def main():
     if violated:
         msg = ("🚫 <b>Git‑hook violation</b>\n"
                "Files contain a rare interpreter *and* reference to <code>SECRET_KEY</code>:\n"
-               + "\n".join(f"- <code>{p}</code>" for p in offending))
+               + "\n".join(f"- <code>{html.escape(p, quote=True)}</code>" for p in offending))
         tg_notify(msg)
         sys.stderr.write("\n".join(offending) + "\n")
         sys.exit(1)

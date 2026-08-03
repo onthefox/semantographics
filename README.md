@@ -52,7 +52,7 @@ The collector uses `auditd` to capture system calls (execve, open, connect) and 
 
 **Setup:**
 ```bash
-sudo cp collector/auditd_rules.conf /etc/audit/rules.d/
+sudo cp collector/auditd_rules.conf /etc/audit/rules.d/auditd_rules.rules
 sudo augenrules --load
 sudo python3 collector/parser.py &
 ```
@@ -65,10 +65,10 @@ Periodically scans the events database for processes with high "focus scores" (p
 
 **Schedule via cron:**
 ```bash
-*/2 * * * * /path/to/responder/auto_isolate.py >> /var/log/auto_isolate.log 2>&1
+*/2 * * * * ISOLATE_MODE=kill /path/to/responder/auto_isolate.py >> /var/log/auto_isolate.log 2>&1
 ```
 
-Set mode: `export ISOLATE_MODE=kill` or `export ISOLATE_MODE=nsenter`
+Set mode by placing `ISOLATE_MODE=kill` or `ISOLATE_MODE=nsenter` inline before the command in the crontab entry
 
 ### 4. Git Hooks
 
@@ -109,7 +109,7 @@ pip install -r requirements.txt
 sudo apt-get install -y auditd falco iproute2
 
 # Enable auditd rules
-sudo cp collector/auditd_rules.conf /etc/audit/rules.d/
+sudo cp collector/auditd_rules.conf /etc/audit/rules.d/auditd_rules.rules
 sudo augenrules --load
 
 # Start the collector
@@ -119,8 +119,12 @@ sudo python3 collector/parser.py &
 sudo cp -r falco/* /etc/falco/
 sudo systemctl restart falco
 
-# Schedule responder
-echo "*/2 * * * * $(pwd)/responder/auto_isolate.py >> /var/log/auto_isolate.log 2>&1" | sudo tee -a /etc/crontab
+# Install and schedule responder
+sudo mkdir -p /opt/llm-suspicion-detector/responder
+sudo cp responder/auto_isolate.py /opt/llm-suspicion-detector/responder/auto_isolate.py
+sudo chmod 755 /opt/llm-suspicion-detector/responder/auto_isolate.py
+sudo chown root:root /opt/llm-suspicion-detector/responder/auto_isolate.py
+echo "*/2 * * * * root ISOLATE_MODE=kill /opt/llm-suspicion-detector/responder/auto_isolate.py >> /var/log/auto_isolate.log 2>&1" | sudo tee -a /etc/crontab
 
 # Install git hooks
 cp git-hooks/pre-commit .git/hooks/
@@ -134,7 +138,7 @@ cd webui && python3 app.py
 - **auto_isolate.py** runs as root – limit execution via cron only
 - **Telegram tokens** should be set via environment variables, never committed
 - **Web UI** is read-only but should be behind authentication if exposed
-- **SQLite DB** should have restricted permissions: `chmod 660 events.sqlite`
+- **SQLite DB** should have restricted permissions: `chmod 660 collector/events.sqlite`
 
 ## License
 
